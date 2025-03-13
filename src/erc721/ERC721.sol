@@ -87,12 +87,7 @@ contract ERC721Token {
         nextTokenIdToMint += 1;
     }
 
-    /**
-     * @dev Batch mint multiple tokens to a single address with different URIs
-     * @param _to Address to mint the tokens to
-     * @param _uris Array of URIs for each token
-     * @return The starting and ending token IDs that were minted
-     */
+    
     function batchMintTo(address _to, string[] memory _uris) public returns (uint256, uint256) {
         require(contractOwner == msg.sender, "!Auth");
         require(_to != address(0), "Cannot mint to zero address");
@@ -108,21 +103,16 @@ contract ERC721Token {
             nextTokenIdToMint += 1;
         }
         
-        // Update balance once instead of in the loop for gas efficiency
+       
         _balances[_to] += quantity;
         
-        // Emit batch mint event
+       
         emit BatchMint(_to, startTokenId, nextTokenIdToMint - 1);
         
         return (startTokenId, nextTokenIdToMint - 1);
     }
 
-    /**
-     * @dev Batch mint tokens with the same URI to multiple recipients
-     * @param _recipients Array of recipient addresses
-     * @param _uri Single URI to use for all tokens
-     * @return The starting and ending token IDs that were minted
-     */
+    
     function batchMintSameURI(address[] memory _recipients, string memory _uri) public returns (uint256, uint256) {
         require(contractOwner == msg.sender, "!Auth");
         require(_recipients.length > 0, "Must provide at least one recipient");
@@ -178,13 +168,7 @@ contract ERC721Token {
         return (startTokenId, nextTokenIdToMint - 1);
     }
 
-        /**
-     * @dev Mint multiple tokens with the same URI to a single recipient
-     * @param _to Address to mint the tokens to
-     * @param _uri Single URI to use for all tokens
-     * @param _quantity Number of tokens to mint
-     * @return The starting and ending token IDs that were minted
-     */
+    
     function batchMintSameURIToOne(address _to, string memory _uri, uint256 _quantity) public returns (uint256, uint256) {
         require(contractOwner == msg.sender, "!Auth");
         require(_to != address(0), "Cannot mint to zero address");
@@ -199,10 +183,10 @@ contract ERC721Token {
             nextTokenIdToMint += 1;
         }
         
-        // Update balance once instead of in the loop
+      
         _balances[_to] += _quantity;
         
-        // Emit batch mint event
+       
         emit BatchMint(_to, startTokenId, nextTokenIdToMint - 1);
         
         return (startTokenId, nextTokenIdToMint - 1);

@@ -7,7 +7,8 @@ import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC2
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Erc20Token is ERC20, ERC20Burnable, Ownable {
-    constructor(address initialOwner)
+    address public initialOwner = msg.sender;
+    constructor()
         ERC20("MyToken", "MTK")
         Ownable(initialOwner)
     {}
