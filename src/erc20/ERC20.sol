@@ -8,8 +8,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Erc20Token is ERC20, ERC20Burnable, Ownable {
     address public initialOwner = msg.sender;
-    constructor()
-        ERC20("MyToken", "MTK")
+    constructor(string memory _name, string memory _symbol)
+        ERC20(_name, _symbol)
         Ownable(initialOwner)
     {}
 
