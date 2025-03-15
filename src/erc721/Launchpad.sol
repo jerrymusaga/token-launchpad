@@ -18,6 +18,7 @@ contract LaunchPad {
     // O(1) lookups for creator verification - this is the source of truth
     mapping(address => mapping(address => bool)) public tokenCreators; // token => creator => bool
 
+    constructor(){}
     function isCreatorOf(address _tokenAddress, address _creator) public view returns (bool) {
         return tokenCreators[_tokenAddress][_creator];
     }
@@ -52,34 +53,34 @@ contract LaunchPad {
         return tokenAddress;
     }
 
-    function batchMint(address _tokenAddress, address _to, string[] memory _uris) external returns(uint, uint) {
-        require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
-        ERC721Token token = ERC721Token(_tokenAddress);
-        return token.batchMintTo(_to, _uris);
-    }
+    // function batchMint(address _tokenAddress, address _to, string[] memory _uris) external returns(uint, uint) {
+    //     require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
+    //     ERC721Token token = ERC721Token(_tokenAddress);
+    //     return token.batchMintTo(_to, _uris);
+    // }
 
-    function batchMintSame(
-        address _tokenAddress,
-        address[] memory _recipients, 
-        string memory _uri
-    ) external returns (uint, uint) {
-        require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
+    // function batchMintSame(
+    //     address _tokenAddress,
+    //     address[] memory _recipients, 
+    //     string memory _uri
+    // ) external returns (uint, uint) {
+    //     require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
         
-        ERC721Token token = ERC721Token(_tokenAddress);
-        return token.batchMintSameURI(_recipients, _uri);
-    }
+    //     ERC721Token token = ERC721Token(_tokenAddress);
+    //     return token.batchMintSameURI(_recipients, _uri);
+    // }
 
-    function batchMintCustom(address _tokenAddress, address[] memory _recipients, string[] memory _uris) external returns(uint, uint){
-        require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
-        ERC721Token token = ERC721Token(_tokenAddress);
-        return token.batchMintCustom(_recipients, _uris);
-    }
+    // function batchMintCustom(address _tokenAddress, address[] memory _recipients, string[] memory _uris) external returns(uint, uint){
+    //     require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
+    //     ERC721Token token = ERC721Token(_tokenAddress);
+    //     return token.batchMintCustom(_recipients, _uris);
+    // }
 
-    function batchMintSameToOne(address _tokenAddress, address _to, string memory _uri, uint256 _quantity) external returns (uint, uint) {
-        require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
-        ERC721Token token = ERC721Token(_tokenAddress);
-        return token.batchMintSameURIToOne(_to, _uri, _quantity);
-    }
+    // function batchMintSameToOne(address _tokenAddress, address _to, string memory _uri, uint256 _quantity) external returns (uint, uint) {
+    //     require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
+    //     ERC721Token token = ERC721Token(_tokenAddress);
+    //     return token.batchMintSameURIToOne(_to, _uri, _quantity);
+    // }
 
     function transferTokenOwnership(address _tokenAddress, address _newOwner) external {
         require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
@@ -96,101 +97,101 @@ contract LaunchPad {
         return allErc721Tokens.length;
     }
 
-    // Modified getter function that filters results based on current ownership
-    function getErc721TokensByCreator(address _creator) external view returns(address[] memory) {
-        address[] memory allTokens = erc721CreatorTokenAddresses[_creator];
+    // getter function that filters results based on current ownership
+    // function getErc721TokensByCreator(address _creator) external view returns(address[] memory) {
+    //     address[] memory allTokens = erc721CreatorTokenAddresses[_creator];
         
-        // First count valid tokens
-        uint validCount = 0;
-        for (uint i = 0; i < allTokens.length; i++) {
-            if (tokenCreators[allTokens[i]][_creator]) {
-                validCount++;
-            }
-        }
+    //     // First count valid tokens
+    //     uint validCount = 0;
+    //     for (uint i = 0; i < allTokens.length; i++) {
+    //         if (tokenCreators[allTokens[i]][_creator]) {
+    //             validCount++;
+    //         }
+    //     }
         
-        // Then create a filtered array
-        address[] memory result = new address[](validCount);
-        uint index = 0;
-        for (uint i = 0; i < allTokens.length; i++) {
-            if (tokenCreators[allTokens[i]][_creator]) {
-                result[index] = allTokens[i];
-                index++;
-            }
-        }
+    //     // Then create a filtered array
+    //     address[] memory result = new address[](validCount);
+    //     uint index = 0;
+    //     for (uint i = 0; i < allTokens.length; i++) {
+    //         if (tokenCreators[allTokens[i]][_creator]) {
+    //             result[index] = allTokens[i];
+    //             index++;
+    //         }
+    //     }
         
-        return result;
-    }
+    //     return result;
+    // }
 
-    function getErc721TokensByCreatorCount(address _creator) external view returns(uint){
-        address[] memory allTokens = erc721CreatorTokenAddresses[_creator];
+    // function getErc721TokensByCreatorCount(address _creator) external view returns(uint){
+    //     address[] memory allTokens = erc721CreatorTokenAddresses[_creator];
         
-        uint validCount = 0;
-        for (uint i = 0; i < allTokens.length; i++) {
-            if (tokenCreators[allTokens[i]][_creator]) {
-                validCount++;
-            }
-        }
+    //     uint validCount = 0;
+    //     for (uint i = 0; i < allTokens.length; i++) {
+    //         if (tokenCreators[allTokens[i]][_creator]) {
+    //             validCount++;
+    //         }
+    //     }
         
-        return validCount;
-    }
+    //     return validCount;
+    // }
 
     function getAllErc20TokenCounts() external view returns(uint){
         return allErc20Tokens.length;
     }
 
    
-    function getErc20TokensByCreator(address _creator) external view returns(address[] memory) {
-        address[] memory allTokens = erc20CreatorTokenAddresses[_creator];
+    // function getErc20TokensByCreator(address _creator) external view returns(address[] memory) {
+    //     address[] memory allTokens = erc20CreatorTokenAddresses[_creator];
         
-        // First count valid tokens
-        uint validCount = 0;
-        for (uint i = 0; i < allTokens.length; i++) {
-            if (tokenCreators[allTokens[i]][_creator]) {
-                validCount++;
-            }
-        }
+    //     // First count valid tokens
+    //     uint validCount = 0;
+    //     for (uint i = 0; i < allTokens.length; i++) {
+    //         if (tokenCreators[allTokens[i]][_creator]) {
+    //             validCount++;
+    //         }
+    //     }
         
-        // Then create a filtered array
-        address[] memory result = new address[](validCount);
-        uint index = 0;
-        for (uint i = 0; i < allTokens.length; i++) {
-            if (tokenCreators[allTokens[i]][_creator]) {
-                result[index] = allTokens[i];
-                index++;
-            }
-        }
+    //     // Then create a filtered array
+    //     address[] memory result = new address[](validCount);
+    //     uint index = 0;
+    //     for (uint i = 0; i < allTokens.length; i++) {
+    //         if (tokenCreators[allTokens[i]][_creator]) {
+    //             result[index] = allTokens[i];
+    //             index++;
+    //         }
+    //     }
         
-        return result;
-    }
+    //     return result;
+    // }
 
-    function getErc20TokensByCreatorCount(address _creator) external view returns(uint){
-        address[] memory allTokens = erc20CreatorTokenAddresses[_creator];
+    // function getErc20TokensByCreatorCount(address _creator) external view returns(uint){
+    //     address[] memory allTokens = erc20CreatorTokenAddresses[_creator];
         
-        uint validCount = 0;
-        for (uint i = 0; i < allTokens.length; i++) {
-            if (tokenCreators[allTokens[i]][_creator]) {
-                validCount++;
-            }
-        }
+    //     uint validCount = 0;
+    //     for (uint i = 0; i < allTokens.length; i++) {
+    //         if (tokenCreators[allTokens[i]][_creator]) {
+    //             validCount++;
+    //         }
+    //     }
         
-        return validCount;
-    }
+    //     return validCount;
+    // }
 
-    function isERC721Token(address _tokenAddress) public view returns (bool) {
-        for (uint i = 0; i < allErc721Tokens.length; i++) {
-            if (allErc721Tokens[i] == _tokenAddress) {
-                return true;
-            }
-        }
-        return false;
-    }
+    // function isERC721Token(address _tokenAddress) public view returns (bool) {
+    //     for (uint i = 0; i < allErc721Tokens.length; i++) {
+    //         if (allErc721Tokens[i] == _tokenAddress) {
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // }
 
-    function isERC20Token(address _tokenAddress) public view returns (bool) {
-        for (uint i = 0; i < allErc20Tokens.length; i++) {
-            if (allErc20Tokens[i] == _tokenAddress) {
-                return true;
-            }
-        }
-        return false;
-    }
+    // function isERC20Token(address _tokenAddress) public view returns (bool) {
+    //     for (uint i = 0; i < allErc20Tokens.length; i++) {
+    //         if (allErc20Tokens[i] == _tokenAddress) {
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // }
 }

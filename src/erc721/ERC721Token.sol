@@ -103,110 +103,110 @@ contract ERC721Token {
         nextTokenIdToMint = tokenId + 1;
     }
 
-    function batchMintTo(address _to, string[] memory _uris) public returns (uint256, uint256) {
-        require(contractOwner == msg.sender, "!Auth");
-        require(_to != address(0), "Cannot mint to zero address");
-        require(_uris.length > 0, "Must provide at least one URI");
+    // function batchMintTo(address _to, string[] memory _uris) public returns (uint256, uint256) {
+    //     require(contractOwner == msg.sender, "!Auth");
+    //     require(_to != address(0), "Cannot mint to zero address");
+    //     require(_uris.length > 0, "Must provide at least one URI");
         
-        uint256 startTokenId = nextTokenIdToMint;
-        uint256 quantity = _uris.length;
+    //     uint256 startTokenId = nextTokenIdToMint;
+    //     uint256 quantity = _uris.length;
         
-        unchecked {
-            // More gas efficient batch mint without individual events
-            for (uint256 i = 0; i < quantity; i++) {
-                uint256 tokenId = startTokenId + i;
-                _owners[tokenId] = _to;
-                _tokenUris[tokenId] = _uris[i];
-            }
+    //     unchecked {
+    //         // More gas efficient batch mint without individual events
+    //         for (uint256 i = 0; i < quantity; i++) {
+    //             uint256 tokenId = startTokenId + i;
+    //             _owners[tokenId] = _to;
+    //             _tokenUris[tokenId] = _uris[i];
+    //         }
             
-            _balances[_to] += quantity;
-            nextTokenIdToMint = startTokenId + quantity;
-        }
+    //         _balances[_to] += quantity;
+    //         nextTokenIdToMint = startTokenId + quantity;
+    //     }
         
        
-        emit BatchMint(_to, startTokenId, nextTokenIdToMint - 1);
+    //     emit BatchMint(_to, startTokenId, nextTokenIdToMint - 1);
         
-        return (startTokenId, nextTokenIdToMint - 1);
-    }
+    //     return (startTokenId, nextTokenIdToMint - 1);
+    // }
 
-    function batchMintSameURI(address[] memory _recipients, string memory _uri) public returns (uint256, uint256) {
-        require(contractOwner == msg.sender, "!Auth");
-        require(_recipients.length > 0, "Must provide at least one recipient");
+    // function batchMintSameURI(address[] memory _recipients, string memory _uri) public returns (uint256, uint256) {
+    //     require(contractOwner == msg.sender, "!Auth");
+    //     require(_recipients.length > 0, "Must provide at least one recipient");
         
-        uint256 startTokenId = nextTokenIdToMint;
-        uint256 quantity = _recipients.length;
+    //     uint256 startTokenId = nextTokenIdToMint;
+    //     uint256 quantity = _recipients.length;
         
-        unchecked {
-            for (uint256 i = 0; i < quantity; i++) {
-                address recipient = _recipients[i];
-                require(recipient != address(0), "Cannot mint to zero address");
+    //     unchecked {
+    //         for (uint256 i = 0; i < quantity; i++) {
+    //             address recipient = _recipients[i];
+    //             require(recipient != address(0), "Cannot mint to zero address");
                 
-                uint256 tokenId = startTokenId + i;
-                _owners[tokenId] = recipient;
-                _balances[recipient] += 1;
-                _tokenUris[tokenId] = _uri;
-            }
+    //             uint256 tokenId = startTokenId + i;
+    //             _owners[tokenId] = recipient;
+    //             _balances[recipient] += 1;
+    //             _tokenUris[tokenId] = _uri;
+    //         }
             
-            nextTokenIdToMint = startTokenId + quantity;
-        }
+    //         nextTokenIdToMint = startTokenId + quantity;
+    //     }
         
        
-        emit BatchMint(address(0), startTokenId, nextTokenIdToMint - 1);
+    //     emit BatchMint(address(0), startTokenId, nextTokenIdToMint - 1);
         
-        return (startTokenId, nextTokenIdToMint - 1);
-    }
+    //     return (startTokenId, nextTokenIdToMint - 1);
+    // }
 
-    function batchMintCustom(address[] memory _recipients, string[] memory _uris) public returns (uint256, uint256) {
-        require(contractOwner == msg.sender, "!Auth");
-        require(_recipients.length > 0, "Must provide at least one recipient");
-        require(_recipients.length == _uris.length, "Recipients and URIs arrays must be same length");
+    // function batchMintCustom(address[] memory _recipients, string[] memory _uris) public returns (uint256, uint256) {
+    //     require(contractOwner == msg.sender, "!Auth");
+    //     require(_recipients.length > 0, "Must provide at least one recipient");
+    //     require(_recipients.length == _uris.length, "Recipients and URIs arrays must be same length");
         
-        uint256 startTokenId = nextTokenIdToMint;
-        uint256 quantity = _recipients.length;
+    //     uint256 startTokenId = nextTokenIdToMint;
+    //     uint256 quantity = _recipients.length;
         
-        unchecked {
-            for (uint256 i = 0; i < quantity; i++) {
-                address recipient = _recipients[i];
-                require(recipient != address(0), "Cannot mint to zero address");
+    //     unchecked {
+    //         for (uint256 i = 0; i < quantity; i++) {
+    //             address recipient = _recipients[i];
+    //             require(recipient != address(0), "Cannot mint to zero address");
                 
-                uint256 tokenId = startTokenId + i;
-                _owners[tokenId] = recipient;
-                _balances[recipient] += 1;
-                _tokenUris[tokenId] = _uris[i];
-            }
+    //             uint256 tokenId = startTokenId + i;
+    //             _owners[tokenId] = recipient;
+    //             _balances[recipient] += 1;
+    //             _tokenUris[tokenId] = _uris[i];
+    //         }
             
-            nextTokenIdToMint = startTokenId + quantity;
-        }
+    //         nextTokenIdToMint = startTokenId + quantity;
+    //     }
         
        
-        emit BatchMint(address(0), startTokenId, nextTokenIdToMint - 1);
+    //     emit BatchMint(address(0), startTokenId, nextTokenIdToMint - 1);
         
-        return (startTokenId, nextTokenIdToMint - 1);
-    }
+    //     return (startTokenId, nextTokenIdToMint - 1);
+    // }
 
-    function batchMintSameURIToOne(address _to, string memory _uri, uint256 _quantity) public returns (uint256, uint256) {
-        require(contractOwner == msg.sender, "!Auth");
-        require(_to != address(0), "Cannot mint to zero address");
-        require(_quantity > 0, "Quantity must be greater than 0");
+    // function batchMintSameURIToOne(address _to, string memory _uri, uint256 _quantity) public returns (uint256, uint256) {
+    //     require(contractOwner == msg.sender, "!Auth");
+    //     require(_to != address(0), "Cannot mint to zero address");
+    //     require(_quantity > 0, "Quantity must be greater than 0");
         
-        uint256 startTokenId = nextTokenIdToMint;
+    //     uint256 startTokenId = nextTokenIdToMint;
         
-        unchecked {
-            // Most gas efficient batch mint - no individual events and same URI/recipient
-            for (uint256 i = 0; i < _quantity; i++) {
-                _owners[startTokenId + i] = _to;
-                _tokenUris[startTokenId + i] = _uri;
-            }
+    //     unchecked {
+    //         // Most gas efficient batch mint - no individual events and same URI/recipient
+    //         for (uint256 i = 0; i < _quantity; i++) {
+    //             _owners[startTokenId + i] = _to;
+    //             _tokenUris[startTokenId + i] = _uri;
+    //         }
             
-            _balances[_to] += _quantity;
-            nextTokenIdToMint = startTokenId + _quantity;
-        }
+    //         _balances[_to] += _quantity;
+    //         nextTokenIdToMint = startTokenId + _quantity;
+    //     }
         
        
-        emit BatchMint(_to, startTokenId, nextTokenIdToMint - 1);
+    //     emit BatchMint(_to, startTokenId, nextTokenIdToMint - 1);
         
-        return (startTokenId, nextTokenIdToMint - 1);
-    }
+    //     return (startTokenId, nextTokenIdToMint - 1);
+    // }
 
     function tokenURI(uint256 _tokenId) public view returns(string memory) {
         require(_owners[_tokenId] != address(0), "Token doesn't exist");
