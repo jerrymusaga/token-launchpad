@@ -4,7 +4,7 @@ import {
   Erc20TokenCreated,
   Erc721TokenCreated,
   TokenOwnershipTransferred
-} from "../generated/Contract/Contract"
+} from "../generated/LaunchPad/LaunchPad"
 
 export function createErc20TokenCreatedEvent(
   creator: Address,

@@ -8,9 +8,9 @@ import {
 } from "matchstick-as/assembly/index"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { Erc20TokenCreated } from "../generated/schema"
-import { Erc20TokenCreated as Erc20TokenCreatedEvent } from "../generated/Contract/Contract"
-import { handleErc20TokenCreated } from "../src/contract"
-import { createErc20TokenCreatedEvent } from "./contract-utils"
+import { Erc20TokenCreated as Erc20TokenCreatedEvent } from "../generated/LaunchPad/LaunchPad"
+import { handleErc20TokenCreated } from "../src/launch-pad"
+import { createErc20TokenCreatedEvent } from "./launch-pad-utils"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0

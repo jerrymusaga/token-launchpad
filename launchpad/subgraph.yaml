@@ -5,11 +5,11 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: Contract
+    name: LaunchPad
     network: sepolia
     source:
       address: "0xCED4dF2d4285f5315Ef5b28055e2D61ea9041B40"
-      abi: Contract
+      abi: LaunchPad
       startBlock: 7902942
     mapping:
       kind: ethereum/events
@@ -20,8 +20,8 @@ dataSources:
         - Erc721TokenCreated
         - TokenOwnershipTransferred
       abis:
-        - name: Contract
-          file: ./abis/Contract.json
+        - name: LaunchPad
+          file: ./abis/LaunchPad.json
       eventHandlers:
         - event: Erc20TokenCreated(indexed address,indexed address,string,string,uint256)
           handler: handleErc20TokenCreated
@@ -29,4 +29,4 @@ dataSources:
           handler: handleErc721TokenCreated
         - event: TokenOwnershipTransferred(indexed address,indexed address,indexed address)
           handler: handleTokenOwnershipTransferred
-      file: ./src/contract.ts
+      file: ./src/launch-pad.ts

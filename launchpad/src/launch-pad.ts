@@ -2,7 +2,7 @@ import {
   Erc20TokenCreated as Erc20TokenCreatedEvent,
   Erc721TokenCreated as Erc721TokenCreatedEvent,
   TokenOwnershipTransferred as TokenOwnershipTransferredEvent
-} from "../generated/Contract/Contract"
+} from "../generated/LaunchPad/LaunchPad"
 import {
   Erc20TokenCreated,
   Erc721TokenCreated,

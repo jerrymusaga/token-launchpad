@@ -1,6 +1,6 @@
 {
   "sepolia": {
-    "Contract": {
+    "LaunchPad": {
       "address": "0xCED4dF2d4285f5315Ef5b28055e2D61ea9041B40",
       "startBlock": 7902942
     }
