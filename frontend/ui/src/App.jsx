@@ -5,7 +5,36 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
+import { gql, useQuery } from "@apollo/client";
 import ABI from "../src/contractABI/LaunchPad.json";
+
+// GraphQL Queries
+const GET_USER_ERC20_TOKENS = gql`
+  query GetUserERC20Tokens($creator: String!) {
+    erc20TokenCreateds(where: { creator: $creator }) {
+      id
+      creator
+      tokenAddress
+      name
+      symbol
+      quantity
+      blockTimestamp
+    }
+  }
+`;
+
+const GET_USER_ERC721_TOKENS = gql`
+  query GetUserERC721Tokens($creator: String!) {
+    erc721TokenCreateds(where: { creator: $creator }) {
+      id
+      creator
+      tokenAddress
+      name
+      symbol
+      blockTimestamp
+    }
+  }
+`;
 
 function App() {
   const { isConnected, address } = useAccount();
@@ -18,14 +47,6 @@ function App() {
   const [tokenQuantity, setTokenQuantity] = useState(1000);
   const [tokenUri, setTokenUri] = useState("");
   const [mintInitial, setMintInitial] = useState(true);
-  const [userTokens, setUserTokens] = useState({ erc20: [], erc721: [] });
-  const [isLoadingTokens, setIsLoadingTokens] = useState(false);
-
-  // useEffect(() => {
-  //   if (address && activeTab === "mytokens") {
-  //     fetchUserTokens();
-  //   }
-  // }, [address]);
 
   const {
     isLoading: isConfirming,
@@ -36,6 +57,55 @@ function App() {
   });
 
   const launchpadContractAddress = "0xCED4dF2d4285f5315Ef5b28055e2D61ea9041B40";
+
+  // Apollo useQuery for ERC20 tokens - Only run when we're on the mytokens tab and address is available
+  const {
+    loading: erc20Loading,
+    error: erc20Error,
+    data: erc20Data,
+    refetch: refetchErc20Tokens,
+  } = useQuery(GET_USER_ERC20_TOKENS, {
+    variables: { creator: address ? address.toLowerCase() : "" },
+    skip: !address || activeTab !== "mytokens",
+    fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true,
+  });
+
+  // Apollo useQuery for ERC721 tokens - Only run when we're on the mytokens tab and address is available
+  const {
+    loading: erc721Loading,
+    error: erc721Error,
+    data: erc721Data,
+    refetch: refetchErc721Tokens,
+  } = useQuery(GET_USER_ERC721_TOKENS, {
+    variables: { creator: address ? address.toLowerCase() : "" },
+    skip: !address || activeTab !== "mytokens",
+    fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true,
+  });
+
+  // Refetch tokens when transaction is confirmed
+  useEffect(() => {
+    if (isConfirmed && activeTab === "mytokens" && address) {
+      refetchErc20Tokens();
+      refetchErc721Tokens();
+    }
+  }, [isConfirmed, activeTab, address]);
+
+  // Handle tab change - refetch data when navigating to My Tokens tab
+  useEffect(() => {
+    if (activeTab === "mytokens" && address) {
+      refetchErc20Tokens();
+      refetchErc721Tokens();
+    }
+  }, [activeTab, address]);
+
+  const fetchUserTokens = () => {
+    if (address) {
+      refetchErc20Tokens();
+      refetchErc721Tokens();
+    }
+  };
 
   const createERC20Token = async (e) => {
     e.preventDefault();
@@ -80,76 +150,9 @@ function App() {
     setTokenUri("");
   };
 
-  // const fetchUserTokens = async () => {
-  //   if (!address) return;
-
-  //   setIsLoadingTokens(true);
-
-  //   try {
-  //     // Uncomment the contract functions or use alternative approach
-  //     // For now, we'll use a simpler way to get token lists
-  //     const erc20Result = await readContract({
-  //       address: launchpadContractAddress,
-  //       abi: [], // ABI for erc20CreatorTokenAddresses
-  //       functionName: "erc20CreatorTokenAddresses",
-  //       args: [address],
-  //     });
-
-  //     const erc721Result = await readContract({
-  //       address: launchpadContractAddress,
-  //       abi: [], // ABI for erc721CreatorTokenAddresses
-  //       functionName: "erc721CreatorTokenAddresses",
-  //       args: [address],
-  //     });
-
-  //     // Filter tokens where user is still creator
-  //     const erc20Tokens = await Promise.all(
-  //       erc20Result.map(async (tokenAddress) => {
-  //         const isCreator = await readContract({
-  //           address: launchpadContractAddress,
-  //           abi: [], // ABI for isCreatorOf
-  //           functionName: "isCreatorOf",
-  //           args: [tokenAddress, address],
-  //         });
-
-  //         if (isCreator) {
-  //           // Get token details
-  //           const name = await readContract({
-  //             address: tokenAddress,
-  //             abi: [], // ERC20 ABI for name
-  //             functionName: "name",
-  //           });
-
-  //           const symbol = await readContract({
-  //             address: tokenAddress,
-  //             abi: [], // ERC20 ABI for symbol
-  //             functionName: "symbol",
-  //           });
-
-  //           return { address: tokenAddress, name, symbol, type: "ERC20" };
-  //         }
-  //         return null;
-  //       })
-  //     );
-
-  //     // Similar process for ERC721 tokens
-  //     const erc721Tokens = await Promise.all(
-  //       erc721Result.map(async (tokenAddress) => {
-  //         // Similar code as above but for ERC721
-  //         // ...
-  //       })
-  //     );
-
-  //     setUserTokens({
-  //       erc20: erc20Tokens.filter(Boolean),
-  //       erc721: erc721Tokens.filter(Boolean),
-  //     });
-  //   } catch (error) {
-  //     console.error("Failed to fetch user tokens:", error);
-  //   } finally {
-  //     setIsLoadingTokens(false);
-  //   }
-  // };
+  // Safely access token arrays, providing empty arrays as fallbacks
+  const erc20Tokens = erc20Data?.erc20TokenCreateds || [];
+  const erc721Tokens = erc721Data?.erc721TokenCreateds || [];
 
   return (
     <div className="max-w-lg mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
@@ -177,6 +180,16 @@ function App() {
               onClick={() => setActiveTab("nft")}
             >
               Create NFT
+            </button>
+            <button
+              className={`flex-1 py-2 ${
+                activeTab === "mytokens"
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200"
+              }`}
+              onClick={() => setActiveTab("mytokens")}
+            >
+              My Tokens
             </button>
           </div>
 
@@ -221,7 +234,7 @@ function App() {
                 {isWritePending ? "Creating..." : "Create ERC20 Token"}
               </button>
             </form>
-          ) : (
+          ) : activeTab === "nft" ? (
             <form onSubmit={createNFT} className="space-y-4">
               <div>
                 <label className="block mb-1">NFT Name</label>
@@ -271,6 +284,96 @@ function App() {
                 {isWritePending ? "Creating..." : "Create NFT"}
               </button>
             </form>
+          ) : (
+            // My Tokens tab content
+            <div className="mt-4">
+              <h2 className="text-xl font-semibold mb-4">My Tokens</h2>
+
+              {erc20Loading || erc721Loading ? (
+                <div className="text-center py-8">Loading your tokens...</div>
+              ) : erc20Error || erc721Error ? (
+                <div className="text-center py-8 text-red-500">
+                  Error loading tokens. Please try again.
+                  <pre className="mt-2 text-xs">
+                    {erc20Error ? erc20Error.message : ""}
+                    {erc721Error ? erc721Error.message : ""}
+                  </pre>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-6">
+                    <h3 className="text-lg font-medium mb-2">ERC20 Tokens</h3>
+                    {erc20Tokens.length === 0 ? (
+                      <p className="text-gray-500">
+                        You haven't created any ERC20 tokens yet.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {erc20Tokens.map((token) => (
+                          <div key={token.id} className="border rounded p-3">
+                            <div className="font-medium">
+                              {token.name} ({token.symbol})
+                            </div>
+                            <div className="text-sm text-gray-500 break-all">
+                              Address: {token.tokenAddress}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Initial Supply: {token.quantity}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Created:{" "}
+                              {new Date(
+                                parseInt(token.blockTimestamp) * 1000
+                              ).toLocaleString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">
+                      NFT Collections
+                    </h3>
+                    {erc721Tokens.length === 0 ? (
+                      <p className="text-gray-500">
+                        You haven't created any NFT collections yet.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {erc721Tokens.map((token) => (
+                          <div key={token.id} className="border rounded p-3">
+                            <div className="font-medium">
+                              {token.name} ({token.symbol})
+                            </div>
+                            <div className="text-sm text-gray-500 break-all">
+                              Address: {token.tokenAddress}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Created:{" "}
+                              {new Date(
+                                parseInt(token.blockTimestamp) * 1000
+                              ).toLocaleString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              <button
+                className="mt-4 w-full bg-gray-200 text-gray-800 py-2 rounded hover:bg-gray-300"
+                onClick={fetchUserTokens}
+                disabled={erc20Loading || erc721Loading}
+              >
+                {erc20Loading || erc721Loading
+                  ? "Loading..."
+                  : "Refresh Tokens"}
+              </button>
+            </div>
           )}
 
           {transactionHash && (

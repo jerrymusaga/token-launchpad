@@ -2,23 +2,31 @@
 
 pragma solidity ^0.8.22;
 import "./ERC721Token.sol";
+import "./ERC1155Token.sol";
 import "../erc20/ERC20.sol";
 
 contract LaunchPad {
     event Erc721TokenCreated(address indexed creator, address indexed tokenAddress, string name, string symbol);
     event Erc20TokenCreated(address indexed creator, address indexed tokenAddress, string name, string symbol, uint quantity);
+    event Erc1155TokenCreated(address indexed creator, address indexed tokenAddress, string name, string symbol);
     event TokenOwnershipTransferred(address indexed previousOwner, address indexed newOwner, address indexed tokenAddress);
+    event CollectibleCreated(address indexed tokenAddress, uint256 indexed collectibleId, string name, uint256 maxSupply);
+    event NFTMinted(address indexed tokenAddress, address indexed to, uint256 tokenId);
+    event CollectibleNFTMinted(address indexed tokenAddress, address indexed to, uint256 collectibleId, uint256 amount);
     
     address[] public allErc721Tokens;
     address[] public allErc20Tokens;
+    address[] public allErc1155Tokens;
 
     mapping(address => address[]) public erc721CreatorTokenAddresses;
     mapping(address => address[]) public erc20CreatorTokenAddresses;
+    mapping(address => address[]) public erc1155CreatorTokenAddresses;
     
     // O(1) lookups for creator verification - this is the source of truth
     mapping(address => mapping(address => bool)) public tokenCreators; // token => creator => bool
 
     constructor(){}
+    
     function isCreatorOf(address _tokenAddress, address _creator) public view returns (bool) {
         return tokenCreators[_tokenAddress][_creator];
     }
@@ -52,36 +60,106 @@ contract LaunchPad {
 
         return tokenAddress;
     }
-
-    // function batchMint(address _tokenAddress, address _to, string[] memory _uris) external returns(uint, uint) {
-    //     require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
-    //     ERC721Token token = ERC721Token(_tokenAddress);
-    //     return token.batchMintTo(_to, _uris);
-    // }
-
-    // function batchMintSame(
-    //     address _tokenAddress,
-    //     address[] memory _recipients, 
-    //     string memory _uri
-    // ) external returns (uint, uint) {
-    //     require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
+    
+    // Create a new ERC1155 token contract for collectibles
+    function createCollectibleContract(string memory _name, string memory _symbol) external returns (address) {
+        ERC1155Token newToken = new ERC1155Token(_name, _symbol);
         
-    //     ERC721Token token = ERC721Token(_tokenAddress);
-    //     return token.batchMintSameURI(_recipients, _uri);
-    // }
-
-    // function batchMintCustom(address _tokenAddress, address[] memory _recipients, string[] memory _uris) external returns(uint, uint){
-    //     require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
-    //     ERC721Token token = ERC721Token(_tokenAddress);
-    //     return token.batchMintCustom(_recipients, _uris);
-    // }
-
-    // function batchMintSameToOne(address _tokenAddress, address _to, string memory _uri, uint256 _quantity) external returns (uint, uint) {
-    //     require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
-    //     ERC721Token token = ERC721Token(_tokenAddress);
-    //     return token.batchMintSameURIToOne(_to, _uri, _quantity);
-    // }
-
+        address tokenAddress = address(newToken);
+        allErc1155Tokens.push(tokenAddress);
+        erc1155CreatorTokenAddresses[msg.sender].push(tokenAddress);
+        tokenCreators[tokenAddress][msg.sender] = true;
+        
+        emit Erc1155TokenCreated(msg.sender, tokenAddress, _name, _symbol);
+        
+        return tokenAddress;
+    }
+    
+    // Create a new collectible type within an ERC1155 contract
+    function createCollectible(
+        address _tokenAddress,
+        string memory _name,
+        string memory _uri,
+        uint256 _maxSupply
+    ) external returns (uint256) {
+        require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
+        
+        ERC1155Token token = ERC1155Token(_tokenAddress);
+        uint256 collectibleId = token.createCollectible(_name, _uri, _maxSupply);
+        
+        emit CollectibleCreated(_tokenAddress, collectibleId, _name, _maxSupply);
+        
+        return collectibleId;
+    }
+    
+    // Mint individual NFT in ERC721 contract
+    function mintNFT(address _tokenAddress, address _to, string memory _uri) external {
+        require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
+        
+        ERC721Token token = ERC721Token(_tokenAddress);
+        uint256 tokenId = token.nextTokenIdToMint();
+        token.mintTo(_to, _uri);
+        
+        emit NFTMinted(_tokenAddress, _to, tokenId);
+    }
+    
+    // Mint collectible NFTs (one type) in ERC1155 contract
+    function mintCollectible(
+        address _tokenAddress,
+        address _to,
+        uint256 _collectibleId,
+        uint256 _amount,
+        bytes memory _data
+    ) external {
+        require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
+        
+        ERC1155Token token = ERC1155Token(_tokenAddress);
+        token.mint(_to, _collectibleId, _amount, _data);
+        
+        emit CollectibleNFTMinted(_tokenAddress, _to, _collectibleId, _amount);
+    }
+    
+    // Batch mint collectible NFTs (multiple types) in ERC1155 contract
+    function batchMintCollectible(
+        address _tokenAddress,
+        address _to,
+        uint256[] memory _collectibleIds,
+        uint256[] memory _amounts,
+        bytes memory _data
+    ) external {
+        require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
+        require(_collectibleIds.length == _amounts.length, "Collectible IDs and amounts length mismatch");
+        
+        ERC1155Token token = ERC1155Token(_tokenAddress);
+        token.mintBatch(_to, _collectibleIds, _amounts, _data);
+        
+        for (uint256 i = 0; i < _collectibleIds.length; i++) {
+            emit CollectibleNFTMinted(_tokenAddress, _to, _collectibleIds[i], _amounts[i]);
+        }
+    }
+    
+    // Get collectible information from ERC1155 contract
+    function getCollectibleInfo(address _tokenAddress, uint256 _collectibleId) external view returns (
+        string memory name,
+        uint256 maxSupply,
+        uint256 currentSupply
+    ) {
+        ERC1155Token token = ERC1155Token(_tokenAddress);
+        return token.getCollectibleInfo(_collectibleId);
+    }
+    
+    // Get collectible URI from ERC1155 contract
+    function getCollectibleURI(address _tokenAddress, uint256 _collectibleId) external view returns (string memory) {
+        ERC1155Token token = ERC1155Token(_tokenAddress);
+        return token.uri(_collectibleId);
+    }
+    
+    // Get user's balance of a collectible
+    function balanceOfCollectible(address _tokenAddress, address _owner, uint256 _collectibleId) external view returns (uint256) {
+        ERC1155Token token = ERC1155Token(_tokenAddress);
+        return token.balanceOf(_owner, _collectibleId);
+    }
+    
     function transferTokenOwnership(address _tokenAddress, address _newOwner) external {
         require(isCreatorOf(_tokenAddress, msg.sender), "You are not the creator of this Token");
         require(_newOwner != address(0), "New owner cannot be zero address");
@@ -93,105 +171,15 @@ contract LaunchPad {
         emit TokenOwnershipTransferred(msg.sender, _newOwner, _tokenAddress);
     }
 
-    function getAllErc721TokenCounts() external view returns(uint){
-        return allErc721Tokens.length;
-    }
-
-    // getter function that filters results based on current ownership
-    // function getErc721TokensByCreator(address _creator) external view returns(address[] memory) {
-    //     address[] memory allTokens = erc721CreatorTokenAddresses[_creator];
-        
-    //     // First count valid tokens
-    //     uint validCount = 0;
-    //     for (uint i = 0; i < allTokens.length; i++) {
-    //         if (tokenCreators[allTokens[i]][_creator]) {
-    //             validCount++;
-    //         }
-    //     }
-        
-    //     // Then create a filtered array
-    //     address[] memory result = new address[](validCount);
-    //     uint index = 0;
-    //     for (uint i = 0; i < allTokens.length; i++) {
-    //         if (tokenCreators[allTokens[i]][_creator]) {
-    //             result[index] = allTokens[i];
-    //             index++;
-    //         }
-    //     }
-        
-    //     return result;
-    // }
-
-    // function getErc721TokensByCreatorCount(address _creator) external view returns(uint){
-    //     address[] memory allTokens = erc721CreatorTokenAddresses[_creator];
-        
-    //     uint validCount = 0;
-    //     for (uint i = 0; i < allTokens.length; i++) {
-    //         if (tokenCreators[allTokens[i]][_creator]) {
-    //             validCount++;
-    //         }
-    //     }
-        
-    //     return validCount;
-    // }
-
     function getAllErc20TokenCounts() external view returns(uint){
         return allErc20Tokens.length;
     }
-
-   
-    // function getErc20TokensByCreator(address _creator) external view returns(address[] memory) {
-    //     address[] memory allTokens = erc20CreatorTokenAddresses[_creator];
-        
-    //     // First count valid tokens
-    //     uint validCount = 0;
-    //     for (uint i = 0; i < allTokens.length; i++) {
-    //         if (tokenCreators[allTokens[i]][_creator]) {
-    //             validCount++;
-    //         }
-    //     }
-        
-    //     // Then create a filtered array
-    //     address[] memory result = new address[](validCount);
-    //     uint index = 0;
-    //     for (uint i = 0; i < allTokens.length; i++) {
-    //         if (tokenCreators[allTokens[i]][_creator]) {
-    //             result[index] = allTokens[i];
-    //             index++;
-    //         }
-    //     }
-        
-    //     return result;
-    // }
-
-    // function getErc20TokensByCreatorCount(address _creator) external view returns(uint){
-    //     address[] memory allTokens = erc20CreatorTokenAddresses[_creator];
-        
-    //     uint validCount = 0;
-    //     for (uint i = 0; i < allTokens.length; i++) {
-    //         if (tokenCreators[allTokens[i]][_creator]) {
-    //             validCount++;
-    //         }
-    //     }
-        
-    //     return validCount;
-    // }
-
-    // function isERC721Token(address _tokenAddress) public view returns (bool) {
-    //     for (uint i = 0; i < allErc721Tokens.length; i++) {
-    //         if (allErc721Tokens[i] == _tokenAddress) {
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
-
-    // function isERC20Token(address _tokenAddress) public view returns (bool) {
-    //     for (uint i = 0; i < allErc20Tokens.length; i++) {
-    //         if (allErc20Tokens[i] == _tokenAddress) {
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
+    
+    function getAllErc721TokenCounts() external view returns(uint){
+        return allErc721Tokens.length;
+    }
+    
+    function getAllErc1155TokenCounts() external view returns(uint){
+        return allErc1155Tokens.length;
+    }
 }
